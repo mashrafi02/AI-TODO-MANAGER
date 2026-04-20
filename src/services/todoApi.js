@@ -33,7 +33,14 @@ export const todoApi = createApi({
             body
         })
     }),
+    toggleDone : build.mutation({
+        query : (params) => ({
+            url: '/todo/toggle-done',
+            method: 'PATCH',
+            params
+        })
+    }),
   }),
 })
 
-export const { useCreateTodoMutation, useGetTodosQuery, useDeleteTodoMutation, useUpdateTodoMutation } = todoApi
+export const { useCreateTodoMutation, useGetTodosQuery, useDeleteTodoMutation, useUpdateTodoMutation, useToggleDoneMutation } = todoApi

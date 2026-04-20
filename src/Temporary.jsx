@@ -10,6 +10,13 @@ export default function App() {
     if (!prompt.trim()) return;
     setLoading(true);
     const aiTodos = await generateTodos(prompt);
+
+    if (aiTodos?.error) {
+      alert(aiTodos.error);
+      setLoading(false);
+      return;
+    }
+
     setTodos(aiTodos);
     setLoading(false);
     setPrompt("")

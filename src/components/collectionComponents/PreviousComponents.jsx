@@ -7,7 +7,7 @@ import PreviousCollection from './PreviousCollection';
 import toast from 'react-hot-toast';
 
 
-const PreviousComponents = ({showNewInput, setShowNewInput, titleRef}) => {
+const PreviousComponents = ({showNewInput, setShowNewInput, titleRef, onNavigate}) => {
 
   const {data, isLoading, refetch} = useGetAllCollectionQuery();
   const [collection, setCollection] = useState(data?.collections || [])
@@ -60,14 +60,14 @@ const PreviousComponents = ({showNewInput, setShowNewInput, titleRef}) => {
             e.preventDefault();
             handleSubmit();
           }}>
-            <input type="text" placeholder='Your Project Name' value={title} onChange={(e) => setTitle(e.target.value)}
-            className='w-full focus:outline-none px-4 py-2 bg-gray-100 rounded-full border-none text-base'
+            <input type="text" placeholder='Project name...' value={title} onChange={(e) => setTitle(e.target.value)}
+            className='w-full focus:outline-none px-4 py-2.5 bg-slate-100 rounded-xl border border-slate-200 text-sm placeholder:text-slate-400 transition'
             ref={titleRef}/>
           </form>
         )
       }
         {
-          collection?.map(element => <PreviousCollection key={element._id} element={element} refetch={refetch} setShowNewInput={setShowNewInput}/>)
+          collection?.map(element => <PreviousCollection key={element._id} element={element} refetch={refetch} setShowNewInput={setShowNewInput} onNavigate={onNavigate}/>)
         }
     </div>
   )

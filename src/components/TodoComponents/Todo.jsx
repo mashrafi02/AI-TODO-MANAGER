@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useDeleteTodoMutation, useUpdateTodoMutation } from '../../services/todoApi';
+import { useDeleteTodoMutation, useUpdateTodoMutation, useToggleDoneMutation } from '../../services/todoApi';
 import toast from 'react-hot-toast';
 import clickOutside from '../../utils/clickOutside';
 
@@ -12,6 +12,9 @@ const Todo = ({todo, refetch}) => {
     const updateRef = useRef(null);
     const editRef = useRef(null);
     const [updateTodo] = useUpdateTodoMutation();
+    const [toggleDone] = useToggleDoneMutation();
+    const [isDone, setIsDone] = useState(todo.done || false);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
     if (isEdit && editRef.current) {
@@ -21,9 +24,11 @@ const Todo = ({todo, refetch}) => {
 
     async function handleDelete () {
         try {
+            setDeleting(true);
             await deleteTodo({todoId: todo._id});
             refetch()
         } catch (error) {
+            setDeleting(false);
             console.log(error)
         }
     }
@@ -49,48 +54,62 @@ const Todo = ({todo, refetch}) => {
         setIsEdit(false);
     })
 
-  return (
-    <li className="p-3 bg-purple-100 rounded-md shadow flex justify-between items-center" ref={updateRef}>
-        {
-            isEdit ? <form onSubmit={(e) => e.preventDefault()} className='w-[400px]'>
-                        <input type="text" value={updateInput} onChange={(e) => setUpdateInput(e.target.value)} ref={editRef}
-                            className='w-full px-4 py-2 text-sm font-semibold bg-white focus:outline border-2 border-gray-100 rounded-full'/>
-                    </form> : 
-            (
-                <div>
-                    <h2 className="font-semibold max-w-[540px]">{todo.title}</h2>
-                    <p className="text-sm text-gray-500">{todo.category}</p>
-                </div>
-            )
+    async function handleToggleDone() {
+        try {
+            setIsDone(!isDone);
+            await toggleDone({ todoId: todo._id });
+        } catch (error) {
+            setIsDone(isDone);
+            console.log(error);
         }
-        <div className='flex items-center gap-x-10'>
+    }
+
+  return (
+    <li className={`p-3 sm:p-4 rounded-xl border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 transition-all duration-200 ${deleting ? 'opacity-50 scale-[0.98] pointer-events-none' : ''} ${isDone ? 'bg-emerald-50/50 border-emerald-200/60' : 'bg-slate-50 border-slate-200/60 hover:border-slate-300'}`} ref={updateRef}>
+        <div className="flex items-start sm:items-center gap-x-3 min-w-0 flex-1">
+            <input
+                type="checkbox"
+                checked={isDone}
+                onChange={handleToggleDone}
+                className="w-[18px] h-[18px] accent-emerald-500 cursor-pointer mt-1 sm:mt-0 shrink-0"
+            />
+            {
+                isEdit ? <form onSubmit={(e) => e.preventDefault()} className='flex-1 min-w-0'>
+                            <input type="text" value={updateInput} onChange={(e) => setUpdateInput(e.target.value)} ref={editRef}
+                                className='w-full px-3 py-1.5 text-sm font-medium bg-white focus:outline-none border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-400 focus:border-violet-400 transition'/>
+                        </form> : 
+                (
+                    <div className="min-w-0">
+                        <h2 className={`font-semibold text-sm sm:text-base leading-snug ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}>{todo.title}</h2>
+                        <p className={`text-xs mt-0.5 ${isDone ? 'text-slate-400' : 'text-slate-500'}`}>{todo.category}</p>
+                    </div>
+                )
+            }
+        </div>
+        <div className='flex items-center gap-x-2 sm:gap-x-3 shrink-0 pl-8 sm:pl-0'>
             <span
-                className={`px-2 py-1 rounded text-sm ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
                 todo.priority === "High"
-                    ? "bg-red-100 text-red-600"
+                    ? "bg-rose-100 text-rose-600"
                     : todo.priority === "Medium"
-                    ? "bg-yellow-100 text-yellow-600"
-                    : "bg-green-100 text-green-600"
+                    ? "bg-amber-100 text-amber-600"
+                    : "bg-emerald-100 text-emerald-600"
                 }`}
             >
                 {todo.priority}
             </span>
-            <div className='flex items-center gap-x-2'>
-                <span className={`px-4 py-2 rounded-md shadow-mf font-bold transition-all ease-linear duration-100 text-white text-sm cursor-pointer ${isEdit? 'bg-green-500 hover:bg-green-800' : ' bg-blue-400 hover:bg-blue-800'}`}>
-                    {isEdit? <span onClick={handleUpdate}>
-                                Update
-                            </span> 
+            <div className='flex items-center gap-x-1.5'>
+                <button className={`px-3 py-1.5 rounded-lg font-semibold transition-all duration-150 text-white text-xs ${isDone ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${isEdit? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-violet-500 hover:bg-violet-600'}`}>
+                    {isEdit? <span onClick={handleUpdate}>Save</span> 
                             : 
                             <span onClick={() => {
-                                setIsEdit(true);
-                            }}>
-                                Edit
-                            </span>}
-                </span>
-                <span className='px-4 py-2 rounded-md shadow-mf font-bold bg-red-400 hover:bg-red-800 transition-all ease-linear duration-100 text-white text-sm cursor-pointer'
-                onClick={handleDelete}>
-                    Delete
-                </span>
+                                if (!isDone) setIsEdit(true);
+                            }}>Edit</span>}
+                </button>
+                <button className={`px-3 py-1.5 rounded-lg font-semibold bg-rose-500 transition-all duration-150 text-white text-xs ${isDone ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-rose-600 active:scale-95'}`}
+                onClick={() => { if (!isDone) handleDelete(); }}>
+                    {deleting ? 'Deleting...' : 'Delete'}
+                </button>
             </div>
         </div>
     </li>
